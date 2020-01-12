@@ -1,0 +1,87 @@
+
+@font-face {
+    font-family: 'AvenirNextPForBBG-Demi';
+    font-display: fallback;
+    
+    
+    src: url('https://assets.bwbx.io/s3/fontservice/fonts/AvenirNextPForBBG-Demi-b9b4abf0ea.woff2') format('woff2'),
+         url('https://assets.bwbx.io/s3/fontservice/fonts/AvenirNextPForBBG-Demi-7459932d1d.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'Bloomberg';
+    font-display: block;
+    
+    src: url('https://assets.bwbx.io/s3/fontservice/fonts/Bloomberg-250afba92d.eot');
+    src: local('?'),
+         url('https://assets.bwbx.io/s3/fontservice/fonts/Bloomberg-048eeffe56.woff2') format('woff2'),
+         url('https://assets.bwbx.io/s3/fontservice/fonts/Bloomberg-5c2599d032.woff') format('woff'),
+         url('https://assets.bwbx.io/s3/fontservice/fonts/Bloomberg-0506a6c14c.svg') format('svg'),
+         url('https://assets.bwbx.io/s3/fontservice/fonts/Bloomberg-aa2f00257e.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'BWHaasGrotesk-65Medium-Web';
+    font-display: swap;
+    
+    src: url('https://assets.bwbx.io/s3/fontservice/fonts/BWHaasGrotesk-65Medium-Web-d9a88b8a91.eot');
+    src: local('?'),
+         url('https://assets.bwbx.io/s3/fontservice/fonts/BWHaasGrotesk-65Medium-Web-8f5de0c368.woff2') format('woff2'),
+         url('https://assets.bwbx.io/s3/fontservice/fonts/BWHaasGrotesk-65Medium-Web-e205ada7dd.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'BW Haas Text Mono A-55 Roman';
+    font-display: swap;
+    
+    
+    src: url('https://assets.bwbx.io/s3/fontservice/fonts/BW%20Haas%20Text%20Mono%20A-55%20Roman-9fa796a3f4.woff2') format('woff2'),
+         url('https://assets.bwbx.io/s3/fontservice/fonts/BW%20Haas%20Text%20Mono%20A-55%20Roman-33b3777385.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'Bloomberg Logotypes-Medium';
+    font-display: block;
+    
+    
+    src: url('https://assets.bwbx.io/s3/fontservice/fonts/Bloomberg%20Logotypes-Medium-0e53877b78.woff2') format('woff2'),
+         url('https://assets.bwbx.io/s3/fontservice/fonts/Bloomberg%20Logotypes-Medium-4f4134c199.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'BWHaasGrotesk-55Roman-Web';
+    font-display: fallback;
+    
+    src: url('https://assets.bwbx.io/s3/fontservice/fonts/BWHaasGrotesk-55Roman-Web-7998fbcba8.eot');
+    src: local('?'),
+         url('https://assets.bwbx.io/s3/fontservice/fonts/BWHaasGrotesk-55Roman-Web-5cf5733cd9.woff2') format('woff2'),
+         url('https://assets.bwbx.io/s3/fontservice/fonts/BWHaasGrotesk-55Roman-Web-a1ea4fd367.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'BWHaasGrotesk-75Bold-Web';
+    font-display: fallback;
+    
+    
+    src: url('https://assets.bwbx.io/s3/fontservice/fonts/BWHaasGrotesk-75Bold-Web-de8c77cce2.woff2') format('woff2'),
+         url('https://assets.bwbx.io/s3/fontservice/fonts/BWHaasGrotesk-75Bold-Web-506363704e.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'BWHaasGrotesk-95Black-Web';
+    font-display: fallback;
+    
+    
+    src: url('https://assets.bwbx.io/s3/fontservice/fonts/BWHaasGrotesk-95Black-Web-3629d1569b.woff2') format('woff2'),
+         url('https://assets.bwbx.io/s3/fontservice/fonts/BWHaasGrotesk-95Black-Web-37847ad026.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'BWHaasGroteskTF-55Roman-Web';
+    font-display: swap;
+    
+    src: url('https://assets.bwbx.io/s3/fontservice/fonts/BWHaasGroteskTF-55Roman-Web-179b9f98cd.eot');
+    src: local('?'),
+         url('https://assets.bwbx.io/s3/fontservice/fonts/BWHaasGroteskTF-55Roman-Web-b3ecfeedba.woff2') format('woff2'),
+         url('https://assets.bwbx.io/s3/fontservice/fonts/BWHaasGroteskTF-55Roman-Web-eef72e4574.woff') format('woff');
+}

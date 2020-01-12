@@ -1,0 +1,276 @@
+if (!window.JSON) {
+  window.JSON = {
+    parse: function (sJSON) { return eval("(" + sJSON + ")"); },
+    stringify: function (vContent) {
+      if (vContent instanceof Object) {
+        var sOutput = "";
+        if (vContent.constructor === Array) {
+          for (var nId = 0; nId < vContent.length; sOutput += this.stringify(vContent[nId]) + ",", nId++);
+            return "[" + sOutput.substr(0, sOutput.length - 1) + "]";
+        }
+        if (vContent.toString !== Object.prototype.toString) {
+          return "\"" + vContent.toString().replace(/"/g, "\\$&") + "\"";
+        }
+        for (var sProp in vContent) {
+          sOutput += "\"" + sProp.replace(/"/g, "\\$&") + "\":" + this.stringify(vContent[sProp]) + ",";
+        }
+        return "{" + sOutput.substr(0, sOutput.length - 1) + "}";
+     }
+     return typeof vContent === "string" ? "\"" + vContent.replace(/"/g, "\\$&") + "\"" : String(vContent);
+    }
+  };
+}
+var brIncrementer = 0;
+(function(){
+    if(typeof(bankrateWidgetBootLoaded) == 'string'){return}
+    bankrateWidgetBootLoaded = 'true';
+
+    //simulate in asynchronous loading case, another <script> tag be add to DOM after the booter tage but before the booter start run in timing.
+    //document.body.appendChild(document.createElement("script"));
+
+    var so = document.getElementsByTagName('script');
+    for (var n = so.length -1; n >= 0; n--) {
+        if (so[n].attributes.src != undefined)
+        {
+            if (so[n].attributes.src.value.indexOf("/booter.js") > 0)
+            {
+                so = so[n];
+                break;
+            }
+        }
+    }
+	if (so.src === undefined) { return; }
+    var u = so.src.split('/');
+    var rootdir = u[0]+'//'+u[2];
+    var mydir = so.src.match(/^(.*)\/booter.js/)[1];
+    var p = pq(so.src.replace(/^[^\?]+\??/,''));
+    var bw;
+    if(typeof(p['class'])  == 'string'){
+        bw = gecn(document.body,p['class']);
+    }else{
+        bw = gecn(document.body,'bankrateWidget');
+    }
+
+    if (bw.length) {
+        loadScripts([mydir+'/bootcfg.js'],function(){
+            makeFrame(200);
+        });
+    }
+    function makeFrame(max){
+        if(typeof(bankrateWidgetBootConfig) == 'object'){
+            var bwb = bankrateWidgetBootConfig;
+
+            for (var i = 0; i < bw.length; i++) {
+                //update to support HTML5 standard html element coustom attributes: data-* prefix
+                if (bw[i].attributes.length > 0) {
+                    var customattrs = { names: [], val: [] };
+                    var count = 0;
+                    for (var j = 0; j < bw[i].attributes.length; j++) {
+                        if (bw[i].attributes[j].name.indexOf('data-') == 0) {
+                            //var attrval = bw[i].attributes[j].value;
+                            customattrs.names[count] = bw[i].attributes[j].name;
+                            customattrs.val[count] = bw[i].attributes[j].value;
+                            count++;
+                        }
+                    }
+
+                    if (customattrs.names.length > 0) {
+                        for (var t = 0; t < customattrs.names.length; t++) {
+                            //remove data-* Attribute
+                            bw[i].attributes.removeNamedItem(customattrs.names[t]);
+                            //set new Attribute
+                            var newattr = document.createAttribute(customattrs.names[t].replace('data-', ''));
+                            newattr.value = customattrs.val[t];
+                            bw[i].attributes.setNamedItem(newattr);
+                        }
+                    }
+                }
+
+				brIncrementer++;
+                var id = 'br'+ brIncrementer;
+                var c  = {};
+                // Added to send small config vars via iframes' url
+                var u = {};
+                var ta = document.createElement('iframe');
+                ta.id = id;
+                for(var a in bw[i].attributes){
+                    if(typeof(bw[i].attributes[a]) =='object'
+                        && typeof(bw[i].attributes[a].value) == 'string'
+                        && bw[i].attributes[a].value != 'null'
+                        && bw[i].attributes[a].value != ''){
+                       c[bw[i].attributes[a].name] = bw[i].attributes[a].value;
+                       ta[bw[i].attributes[a].name] = bw[i].attributes[a].value;
+                    }
+                }
+                c.origdomain = u.origdomain = document.location.protocol+'//'+document.location.host;
+
+                ta.frameBorder=0;
+                ta.scrolling='no';
+                if(typeof c['debug'] == 'string'){
+                    ta.width=200;
+                    ta.height=200;
+                }else{
+                    ta.width=0;
+                    ta.height=0;
+                }
+                var kind = (typeof(bwb[c.app])=='object' && typeof( bwb[c.app].kind) == 'string')
+                            ?bwb[c.app].kind : '';
+                // client overwrites bootcfg
+                c.kind = u.kind = typeof(c.kind) == 'string' ? c.kind :kind;
+                c.appcfg =  u.appcfg =  c.app+c.kind;
+                c.frameid = u.frameid = ta.id;
+
+                //c.bwb = bwb;
+                window[id] = c;
+                window[id].bwb = bwb;
+
+                // for GTM
+                u.fullURL = u.origdomain + document.location.pathname;
+                u.campaign = c.campaign;
+
+                ta.src = mydir + '/builder.html?pid=' + ta.pid + '&id=' + ta.id + '&config=' + encodeURI(JSON.stringify(u));
+                bw[i].className = bw[i].className + " parsed";
+                var dv = document.createElement("div");
+                dv.className = id + " " + c.app+ " " + c.app+"-"+c.kind;
+
+                bw[i].parentNode.insertBefore(dv,bw[i]);
+                dv.appendChild(ta);
+
+                bw[i].style.display = 'none';
+
+            }
+        }else{
+            setTimeout(function(){max -=1;makeFrame(max),10});
+        }
+    }
+
+    function pq ( query ) {
+       var params = {};
+       if ( !query ) return params; // return empty object
+       var pairs = query.split(/[;&]/);
+       for ( var i = 0; i < pairs.length; i++ ) {
+          var keyval = pairs[i].split('=');
+          if ( ! keyval || keyval.length != 2 ) continue;
+          var key = unescape( keyval[0] );
+          var val = unescape( keyval[1] );
+          val = val.replace(/\+/g, ' ');
+          params[key] = val;
+       }
+       return params;
+    }
+
+
+    function gecn(node,classname) {
+      if (node.getElementsByClassName) { // use native implementation if available
+        return node.getElementsByClassName(classname);
+      } else {
+        return (function getElementsByClass(searchClass,node) {
+            if ( node == null )
+              node = document;
+            var classElements = [],
+                els = node.getElementsByTagName("*"),
+                elsLen = els.length,
+                pattern = new RegExp("(^|\\s)"+searchClass+"(\\s|$)"), i, j;
+
+            for (i = 0, j = 0; i < elsLen; i++) {
+              if ( pattern.test(els[i].className) ) {
+                  classElements[j] = els[i];
+                  j++;
+              }
+            }
+            return classElements;
+        })(classname, node);
+      }
+    }
+
+    //Different than parseclient's loadScripts. Just appends
+    function loadScripts(array,callback){
+        var loader = function(src,handler){
+            var script = document.createElement("script");
+            script.src = src;
+            script.onload = script.onreadystatechange = function(){
+                script.onreadystatechange = script.onload = null;
+                handler(arguments,src,handler);
+            }
+            var head = document.getElementsByTagName("head")[0];
+            (head || document.body).appendChild( script );
+        };
+        (function(who){
+            if(array.length!=0){
+                loader(array.shift(),arguments.callee);
+            }else{
+                callback && callback(who);
+            }
+        })();
+    }
+
+    var messageAPI = {
+        mapi : function(e){
+            if(e.origin == rootdir){
+                if(!e.data || !JSON){return}
+				var d = JSON.parse(e.data);
+				messageAPI.start(d);
+            }
+        },
+
+        start:function(d){
+            var r = d;
+                for(var funct in r){
+                    if(typeof(this[funct]) != 'undefined'){
+                        this[funct](r[funct].args);
+                    }else{
+                        (eval('this.'+funct+'='+r[funct].funct))(r[funct].args);
+                    }
+                }
+        },
+        setWidth:function(args){
+        	//console.log("~~~~~~~~~~~~booter setWidth~~~~~~~~!!!!!!!!!!");
+            if(document.getElementById(args[0])) {
+            	//console.log("!!!!in Booter setWidth called!!!!");
+            	//console.dir(args);
+                //args is array(id,width);
+            	var width = args[1];
+            	if ( width ) {
+            		width = width + 'px';
+            	} else {
+            		width = '100%';
+            	}
+            	//var err = new Error();
+            	//console.log(err.stack);
+
+            	//console.log("~~~~~~~~width: " + width);
+                document.getElementById(args[0]).width=width;
+                document.getElementById(args[0]).style.width=width;
+
+            }
+        },
+        setHeight:function(args){
+            //args is array(id,width);
+            if(document.getElementById(args[0])) {
+                document.getElementById(args[0]).height=args[1];
+                document.getElementById(args[0]).style.height=args[1];
+            }
+        },
+        getBootCfg:function(args){
+            var d ={};
+            d['sendBootCfg'] = {args:[window[args[0]],args[2]]};
+            //TODO change this to window if they have a div and not an iframe
+            //document.getElementById(args[0]).contentWindow.postMessage(JSON.stringify(d),args[1]));
+
+            if(document.getElementById(args[0])){
+                setTimeout(function(){
+                    document.getElementById(args[0]).contentWindow.postMessage(JSON.stringify(d),args[1]);
+                },0);
+            }
+        }
+    }
+
+    if(typeof(window.addEventListener) == 'undefined'){
+        window.attachEvent('onmessage',messageAPI.mapi,false);
+    }else{
+        window.addEventListener('message',messageAPI.mapi,false);
+    }
+
+
+
+}());
