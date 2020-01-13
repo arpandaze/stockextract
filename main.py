@@ -2,12 +2,12 @@ import json
 import requests
 from bs4 import BeautifulSoup
 import datetime
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 
-API_TOKEN = 'lrvOK0nt8PySs9AG9NuRXjshPdkY5o02xMGQswjW3OZfP4B1yfDTeV5bs7Nf'
+API_TOKEN = 'iqp1xrePcCdLNDWQLEagN517asfLpU6Mqo2KrcMAtkGa77yyHFa2GI6IZDXn'
 WTD_BASE_URL = "https://api.worldtradingdata.com/api/v1/stock"
 WTD_HISTORY_BASE_URL = "https://api.worldtradingdata.com/api/v1/history"
-
-CURRENCY_BASE_URL = "https://api.exchangeratesapi.io"
 
 ticker_names = [
                 'S&P 500',
@@ -81,8 +81,18 @@ yahoo_symbol = {
                 'USDJPY':'USDJPY=X',
                 'EURUSD':'EURUSD=X',
                 'GBPNOK':'GBPNOK=X',
-                'EURNOK':'EURNOK=X'
+                'EURNOK':'EURNOK=X',
+                'Gull':'GC=F'
                }
+
+bloomberg_symbol = {
+                        'Trend Global':'TRENDEN:NO',
+                        'Trend Europa':'TRENDEU:NO',
+                        'Trend USA':'TRENDUS:NO',
+                        'Olje':'CO1:COM',
+                        'Kobber':'LMCADS03:COM',
+                        'Aluminium':'LMAHDS03:COM'
+                   }
 
 def date(day):
     if(day == 'yesterday'):
@@ -110,6 +120,32 @@ def getDataFromYahoo(symbol):
     except:
         print('Error while getting data from yahoo!')
         return ''
+
+def getBloombergData(ticker_name):
+    options = Options()
+    options.headless = True
+    driver = webdriver.Firefox(options=options,executable_path=r'webdriver.exe')
+    driver.get("https://www.bloomberg.com/quote/{}".format(bloomberg_symbol[ticker_name]))
+    raw_html = str(driver.page_source.encode("utf-8"))
+    driver.close()
+    soup = BeautifulSoup(raw_html,'lxml')
+    textBlock = soup.find_all('span',string='{}'.format(bloomberg_symbol[ticker_name]))
+    valueDataBlock = textBlock[0].find_parent('section').findNext('section').find_all('span')
+    currentValue = valueDataBlock[0].get_text().replace(',','')
+    changePercent = str(float(valueDataBlock[3].get_text()[:-1]))
+    try:
+        ytdValue=soup.find_all('span',string='YTD Return')[0].nextSibling.get_text()
+        ytdValue=str(float(ytdValue[:-1]))
+    except:
+        ytdValue=''
+    try:
+        oneYearReturnValue=soup.find_all('span',string='1 Year Return')[0].nextSibling.get_text()
+        oneYearReturnValue=str(float(oneYearReturnValue[:-1]))
+    except:
+        oneYearReturnValue=''
+
+    returnJSON = {bloomberg_symbol[ticker_name]:{date('today'):{'price':currentValue,'day_change':changePercent, 'year_change':oneYearReturnValue, 'ytd_change':ytdValue}}}
+    return returnJSON
 
 def getCurrentDataFromWTC(symbol):
     infos = {'symbol':symbol, 'api_token':API_TOKEN}
@@ -202,8 +238,6 @@ def getAllValues():
         
         elif ticker_name in ','.join(yahoo_symbol).split(','):
             resposeDataYahoo = getDataFromYahoo(yahoo_symbol[ticker_name])
-            print(ticker_name)
-            print(resposeDataYahoo)
             currentPrice = resposeDataYahoo['price']
             day_change = resposeDataYahoo['change_pct']
 
@@ -225,12 +259,19 @@ def getAllValues():
 
             parsedJSON = {yahoo_symbol[ticker_name]:{date('today'):{'price':currentPrice,'day_change':day_change, 'year_change':year_change, 'ytd_change':ytd_change}}}
             allData.update(parsedJSON)
-        else:
-            print(ticker_name)
+        
+        elif ticker_name in ','.join(bloomberg_symbol).split(','):
+            resposeDataBloomberg = getBloombergData(ticker_name)
+            currentPrice = resposeDataBloomberg[bloomberg_symbol[ticker_name]][date('today')]['price']
+            day_change = resposeDataBloomberg[bloomberg_symbol[ticker_name]][date('today')]['day_change']
+            year_change = resposeDataBloomberg[bloomberg_symbol[ticker_name]][date('today')]['year_change']
+            ytd_change = resposeDataBloomberg[bloomberg_symbol[ticker_name]][date('today')]['ytd_change']
+            allData.update(resposeDataBloomberg)
+
 
     writeLocalHistory(allData)
     return allData
     
 
 
-print(getAllValues())
+print(getBloombergData("Trend Global"))

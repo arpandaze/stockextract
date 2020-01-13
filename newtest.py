@@ -2,6 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import random
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+
 
 with open('proxy.txt','r') as proxyFile:
     #proxyList=proxyFile.read().split('\n')
@@ -22,7 +25,7 @@ def getBloomberg():
         header = {'User-Agent': userAgent.random}
         print(header)
         proxyDictionary = {'http':'socks4://{}'.format(proxy),'https':'socks4://{}'.format(proxy)}
-        url = requests.get('https://www.bloomberg.com/quote/TRENDEU:NO',headers=header,proxies=proxyDictionary)
+        url = requests.get('https://www.bloomberg.com/quote/TRENDEU:NO',headers=header)
         soup = BeautifulSoup(url.content,features='lxml')
         textBlock = soup.find_all('span',string='TRENDEU:NO')
         print(url.content)
@@ -35,6 +38,7 @@ def getBloomberg():
     value = ','.join((currentValue,changePercent,ytdValue,oneYearReturnValue))
     return value
 data = getBloomberg()
-while(data == []):
-    getBloomberg()
+
+#while(data == []):
+ #   getBloomberg()
 print(data)
