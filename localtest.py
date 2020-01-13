@@ -8,4 +8,7 @@ def getBloomberg():
     oneYearReturnValue=soup.find_all('span',string='1 Year Return')[0].nextSibling.get_text()
     value = ','.join((currentValue,changePercent,ytdValue,oneYearReturnValue))
     return value
-print(getBloomberg())
+
+
+
+print(getCurrentCurrencyData())
