@@ -4,8 +4,11 @@ from bs4 import BeautifulSoup
 import datetime
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
+from openpyxl import Workbook
+from openpyxl import load_workbook
+from xlsx2html import xlsx2html
 
-API_TOKEN = 'iqp1xrePcCdLNDWQLEagN517asfLpU6Mqo2KrcMAtkGa77yyHFa2GI6IZDXn'
+API_TOKEN = 'YOUY API KEY HERE'
 WTD_BASE_URL = "https://api.worldtradingdata.com/api/v1/stock"
 WTD_HISTORY_BASE_URL = "https://api.worldtradingdata.com/api/v1/history"
 
@@ -32,16 +35,15 @@ ticker_names = [
                 'FTSE China A50',
                 '3188 HK',
                 'HSCEI',
-                'The Big Four Kina',
                 'Olje',
                 'Kobber',
                 'Aluminium',
                 'Gull',
                 'USDNOK',
                 'EURNOK',
+                'GBPNOK',
                 'EURUSD',
                 'USDJPY',
-                'GBPNOK',
                 'iShare High Yield',
                 'US 10 Yr',
                 'Trend Global',
@@ -49,50 +51,89 @@ ticker_names = [
                 'Trend USA'
                 ]
 
-wtd_symbol = {
-                'S&P 500':'^INX',
-                'Nasdaq Comp':'^IXIC',
-                'Dow Jones':'^DJI',
-                'Russell2000':'^RUT',
-                'OMXS30B':'^OMXS30',
-                'Euro Stoxx 50':'^SX5E',
-                'DAX':'^DAX',
-                'CAC 40':'^PX1',
-                'FTSE 100':'^UKX',
-                'FTSE MIB':'^FTSEMIB',
-                'IBEX 35':'^IB',
-                'PSI 20':'^PSI20',
-                'Nikkei 225':'^NI225',
-                'KOSPI':'KOSPI.KS',
-                'HANG SENG':'^HSI',
-                'Bombay SENSEX':'^SENSEX',
-                'FTSE China A50':'^XIN9',
-                '3188 HK':'3188.HK'
-              }
+symbols = { 
+                    'Shanghai Composite':'000001.SS',
+                    'CSI 300':'000300.SS',
+                    'HSCEI':'^HSCE',
+                    'OSEBX':'OSEBX.OL',
+                    'iShare High Yield':'HYG',
+                    'US 10 Yr':'^TNX',
+                    'USDNOK':'USDNOK=X',
+                    'USDJPY':'USDJPY=X',
+                    'EURUSD':'EURUSD=X',
+                    'GBPNOK':'GBPNOK=X',
+                    'EURNOK':'EURNOK=X',
+                    'Gull':'GC=F',
+                    'Trend Global':'TRENDEN:NO',
+                    'Trend Europa':'TRENDEU:NO',
+                    'Trend USA':'TRENDUS:NO',
+                    'Olje':'CO1:COM',
+                    'Kobber':'LMCADS03:COM',
+                    'Aluminium':'LMAHDS03:COM',
+                    'S&P 500':'^INX',
+                    'Nasdaq Comp':'^IXIC',
+                    'Dow Jones':'^DJI',
+                    'Russell2000':'^RUT',
+                    'OMXS30B':'^OMXS30',
+                    'Euro Stoxx 50':'^SX5E',
+                    'DAX':'^DAX',
+                    'CAC 40':'^PX1',
+                    'FTSE 100':'^UKX',
+                    'FTSE MIB':'^FTSEMIB',
+                    'IBEX 35':'^IB',
+                    'PSI 20':'^PSI20',
+                    'Nikkei 225':'^NI225',
+                    'KOSPI':'KOSPI.KS',
+                    'HANG SENG':'^HSI',
+                    'Bombay SENSEX':'^SENSEX',
+                    'FTSE China A50':'^XIN9',
+                    '3188 HK':'3188.HK'
+                }
 
-yahoo_symbol = {
-                'Shanghai Composite':'000001.SS',
-                'CSI 300':'000300.SS',
-                'HSCEI':'^HSCE',
-                'OSEBX':'OSEBX.OL',
-                'iShare High Yield':'HYG',
-                'US 10 Yr':'^TNX',
-                'USDNOK':'USDNOK=X',
-                'USDJPY':'USDJPY=X',
-                'EURUSD':'EURUSD=X',
-                'GBPNOK':'GBPNOK=X',
-                'EURNOK':'EURNOK=X',
-                'Gull':'GC=F'
-               }
+wtd_list = [
+                'S&P 500',
+                'Nasdaq Comp',
+                'Dow Jones',
+                'Russell2000',
+                'OMXS30B',
+                'Euro Stoxx 50',
+                'DAX',
+                'CAC 40',
+                'FTSE 100',
+                'FTSE MIB',
+                'IBEX 35',
+                'PSI 20',
+                'Nikkei 225',
+                'KOSPI',
+                'HANG SENG',
+                'Bombay SENSEX',
+                'FTSE China A50',
+                '3188 HK'
+            ]
 
-bloomberg_symbol = {
-                        'Trend Global':'TRENDEN:NO',
-                        'Trend Europa':'TRENDEU:NO',
-                        'Trend USA':'TRENDUS:NO',
-                        'Olje':'CO1:COM',
-                        'Kobber':'LMCADS03:COM',
-                        'Aluminium':'LMAHDS03:COM'
-                   }
+yahoo_list = [
+                'Shanghai Composite',
+                'CSI 300',
+                'HSCEI',
+                'OSEBX',
+                'iShare High Yield',
+                'US 10 Yr',
+                'USDNOK',
+                'USDJPY',
+                'EURUSD',
+                'GBPNOK',
+                'EURNOK',
+                'Gull'
+              ]
+
+bloomberg_list = [
+                        'Trend Global',
+                        'Trend Europa',
+                        'Trend USA',
+                        'Olje',
+                        'Kobber',
+                        'Aluminium'
+                 ]
 
 def date(day):
     if(day == 'yesterday'):
@@ -112,7 +153,7 @@ def getDataFromYahoo(symbol):
         url = requests.get("https://finance.yahoo.com/quote/{}".format(symbol))
         soup = BeautifulSoup(url.content,features='lxml')
         header_block = list(soup.find_all(id='quote-header-info')[0].children)
-        price_text = header_block[2].find_all('span')[0].get_text()
+        price_text = header_block[2].find_all('span')[0].get_text().replace(',','')
         day_change_block = header_block[2].find_all('span')[1].get_text()
         percent_day_change = str(float(day_change_block[day_change_block.index('(')+1:day_change_block.index(')')-1]))
         return_data = {'price':price_text, 'change_pct':percent_day_change}
@@ -125,11 +166,11 @@ def getBloombergData(ticker_name):
     options = Options()
     options.headless = True
     driver = webdriver.Firefox(options=options,executable_path=r'webdriver.exe')
-    driver.get("https://www.bloomberg.com/quote/{}".format(bloomberg_symbol[ticker_name]))
+    driver.get("https://www.bloomberg.com/quote/{}".format(symbols[ticker_name]))
     raw_html = str(driver.page_source.encode("utf-8"))
     driver.close()
     soup = BeautifulSoup(raw_html,'lxml')
-    textBlock = soup.find_all('span',string='{}'.format(bloomberg_symbol[ticker_name]))
+    textBlock = soup.find_all('span',string='{}'.format(symbols[ticker_name]))
     valueDataBlock = textBlock[0].find_parent('section').findNext('section').find_all('span')
     currentValue = valueDataBlock[0].get_text().replace(',','')
     changePercent = str(float(valueDataBlock[3].get_text()[:-1]))
@@ -144,7 +185,7 @@ def getBloombergData(ticker_name):
     except:
         oneYearReturnValue=''
 
-    returnJSON = {bloomberg_symbol[ticker_name]:{date('today'):{'price':currentValue,'day_change':changePercent, 'year_change':oneYearReturnValue, 'ytd_change':ytdValue}}}
+    returnJSON = {symbols[ticker_name]:{date('today'):{'price':currentValue,'day_change':changePercent, 'year_change':oneYearReturnValue, 'ytd_change':ytdValue}}}
     return returnJSON
 
 def getCurrentDataFromWTC(symbol):
@@ -154,45 +195,15 @@ def getCurrentDataFromWTC(symbol):
         return json.loads(api_requests.content)
     except:
         print("Unexpected Error #1")
-'''
-def getCurrencyDataWithBase(base,valueDate):
-    print(valueDate)
-    if(valueDate == str(date('today'))):
-        url = CURRENCY_BASE_URL + '/latest'
-    else:
-        url = CURRENCY_BASE_URL + '/{}'.format(valueDate)
-    infos = {'base':base,'symbols':'JPY,USD,NOK,EUR,GBP'}
-    api_requests = requests.get(url,params=infos)
-    jsonFile = json.loads(api_requests.content)
-    print(jsonFile)
-    EURNOK = 1/float(jsonFile['rates']['EUR'])
-    USDNOK = 1/float(jsonFile['rates']['USD'])
-    GBPNOK = 1/float(jsonFile['rates']['GBP'])
-    EURUSD = float(EURNOK/USDNOK)
-    USDJPY = USDNOK*float(jsonFile['rates']['JPY'])
-    returnJSON = {"EURNOK":EURNOK,"USDNOK":USDNOK,"GBPNOK":GBPNOK,"EURUSD":EURUSD, "USDJPY":USDJPY}
-    return returnJSON
-
-def getCurrencyData():
-    jsonFile = getCurrencyDataWithBase('NOK',date('today'))
-    jsonYesterdayFile = getCurrencyDataWithBase('NOK',date('yesterday'))
-    returnEURNOK = {'price':jsonFile['EURNOK'], 'change_pct':'{}'.format((float(jsonFile['EURNOK'])-float(jsonYesterdayFile['EURNOK']))/float(jsonYesterdayFile['EURNOK'])*100)}
-    returnUSDNOK = {'price':jsonFile['USDNOK'], 'change_pct':'{}'.format((float(jsonFile['USDNOK'])-float(jsonYesterdayFile['USDNOK']))/float(jsonYesterdayFile['USDNOK'])*100)}
-    returnGBPNOK = {'price':jsonFile['GBPNOK'], 'change_pct':'{}'.format((float(jsonFile['GBPNOK'])-float(jsonYesterdayFile['GBPNOK']))/float(jsonYesterdayFile['GBPNOK'])*100)}
-    returnEURUSD = {'price':jsonFile['EURUSD'], 'change_pct':'{}'.format((float(jsonFile['EURUSD'])-float(jsonYesterdayFile['EURUSD']))/float(jsonYesterdayFile['EURUSD'])*100)}
-    returnUSDNOK = {'price':jsonFile['USDJPY'], 'change_pct':'{}'.format((float(jsonFile['USDJPY'])-float(jsonYesterdayFile['USDJPY']))/float(jsonYesterdayFile['USDJPY'])*100)}
-    combinedReturn = {'EURNOK':returnEURNOK,'USDNOK':returnUSDNOK, 'GBPNOK':returnGBPNOK, 'EURUSD':returnEURUSD, 'USDNOK':returnUSDNOK}
-    return combinedReturn
-'''
 
 def findLocalHistoryData(tickerName,date):
     try:
         ticker_filename = 'json/data.json'
         with open(ticker_filename,'r') as file:
             jsonDictionary = json.load(file)
-            return jsonDictionary[wtd_symbol[tickerName]][date]['price']
+            return jsonDictionary[symbols[tickerName]][date]['price']
     except:
-        print('Error finding local data! #29')
+        print('Local history missing! Continuing without it!')
         return ''
 
 def writeLocalHistory(data):
@@ -207,13 +218,86 @@ def writeLocalHistory(data):
                 file.truncate(0)
                 json.dump(dictionary,file)
 
+def exportToExcel(JSONData,date,name):
+    excel_workbook = load_workbook('others/stocks_temp.xlsx')
+    excel_worksheet = excel_workbook.active
+    dataList = []
+    for ticker_name in ticker_names:
+        indData = []
+        base=JSONData[symbols[ticker_name]][date]
+
+        if(base['price'] != ''):
+            indData += [float(base['price'].replace(',',''))]
+        else:
+            indData += ['']
+
+        if(base['day_change'] != ''):
+            indData += [float(base['day_change'].replace(',',''))/100]
+        else:
+            indData = ['']
+        
+        if(base['year_change'] != ''):
+            indData += [float(base['year_change'].replace(',',''))/100]
+        else:
+            indData += ['']
+        
+        if(base['ytd_change'] != ''):
+            indData += [float(base['ytd_change'].replace(',',''))/100]
+        else:
+            indData += ['']
+        dataList += [indData]
+    
+    #USA Tickers
+    for j in range(4):
+        for i in range(4):
+            excel_worksheet['{}{}'.format(chr(ord('B')+i), str(4+j))] = dataList[j][i]
+
+    #Europe Tickers
+    for j in range(9):
+        for i in range(4):
+            excel_worksheet['{}{}'.format(chr(ord('B')+i), str(10+j))] = dataList[4+j][i]
+    
+    #Asia Tickers
+    for j in range(9):
+        for i in range(4):
+            excel_worksheet['{}{}'.format(chr(ord('B')+i), str(21+j))] = dataList[13+j][i]
+
+    #Commodities
+    for j in range(4):
+        for i in range(4):
+            excel_worksheet['{}{}'.format(chr(ord('H')+i), str(2+j))] = dataList[22+j][i]
+
+    #Currencies
+    for j in range(5):
+        for i in range(4):
+            excel_worksheet['{}{}'.format(chr(ord('H')+i), str(10+j))] = dataList[26+j][i]
+
+    #Interest & Bonds
+    for j in range(2):
+        for i in range(4):
+            excel_worksheet['{}{}'.format(chr(ord('H')+i), str(21+j))] = dataList[31+j][i]
+
+    #Funds
+    for j in range(3):
+        for i in range(4):
+            excel_worksheet['{}{}'.format(chr(ord('H')+i), str(25+j))] = dataList[33+j][i]
+
+    excel_workbook.save('{}.xlsx'.format(name))
+    print("Exported to Excel!")
+
+def exportToHTML(excel_file,export_file_name):
+    out_html = xlsx2html(excel_file)
+    out_html.seek(0)
+    with open(export_file_name,'w') as file:
+        file.write(out_html.read())
+
 def getAllValues():
     allData = {}
     for ticker_name in ticker_names:
-        if ticker_name in ','.join(wtd_symbol).split(','):
+        if ticker_name in wtd_list:
             
             #For current price and day_change
-            responseJSON = getCurrentDataFromWTC(wtd_symbol[ticker_name])
+            responseJSON = getCurrentDataFromWTC(symbols[ticker_name])
             currentPrice = responseJSON['data'][0]['price']
             day_change = responseJSON['data'][0]['change_pct']
 
@@ -233,11 +317,11 @@ def getAllValues():
             except:
                 ytd_change = ''
 
-            parsedJSON = {wtd_symbol[ticker_name]:{date('today'):{'price':currentPrice,'day_change':day_change, 'year_change':year_change, 'ytd_change':ytd_change}}}
+            parsedJSON = {symbols[ticker_name]:{date('today'):{'price':currentPrice,'day_change':day_change, 'year_change':year_change, 'ytd_change':ytd_change}}}
             allData.update(parsedJSON)
         
-        elif ticker_name in ','.join(yahoo_symbol).split(','):
-            resposeDataYahoo = getDataFromYahoo(yahoo_symbol[ticker_name])
+        elif ticker_name in yahoo_list:
+            resposeDataYahoo = getDataFromYahoo(symbols[ticker_name])
             currentPrice = resposeDataYahoo['price']
             day_change = resposeDataYahoo['change_pct']
 
@@ -257,21 +341,21 @@ def getAllValues():
             except:
                 ytd_change = ''
 
-            parsedJSON = {yahoo_symbol[ticker_name]:{date('today'):{'price':currentPrice,'day_change':day_change, 'year_change':year_change, 'ytd_change':ytd_change}}}
+            parsedJSON = {symbols[ticker_name]:{date('today'):{'price':currentPrice,'day_change':day_change, 'year_change':year_change, 'ytd_change':ytd_change}}}
             allData.update(parsedJSON)
         
-        elif ticker_name in ','.join(bloomberg_symbol).split(','):
+        elif ticker_name in bloomberg_list:
             resposeDataBloomberg = getBloombergData(ticker_name)
-            currentPrice = resposeDataBloomberg[bloomberg_symbol[ticker_name]][date('today')]['price']
-            day_change = resposeDataBloomberg[bloomberg_symbol[ticker_name]][date('today')]['day_change']
-            year_change = resposeDataBloomberg[bloomberg_symbol[ticker_name]][date('today')]['year_change']
-            ytd_change = resposeDataBloomberg[bloomberg_symbol[ticker_name]][date('today')]['ytd_change']
+            currentPrice = resposeDataBloomberg[symbols[ticker_name]][date('today')]['price']
+            day_change = resposeDataBloomberg[symbols[ticker_name]][date('today')]['day_change']
+            year_change = resposeDataBloomberg[symbols[ticker_name]][date('today')]['year_change']
+            ytd_change = resposeDataBloomberg[symbols[ticker_name]][date('today')]['ytd_change']
             allData.update(resposeDataBloomberg)
 
 
     writeLocalHistory(allData)
+    exportToExcel(allData,date('today'),date('today'))
+    exportToHTML('{}.xlsx'.format(date('today')), '{}.html'.format(date('today')))
     return allData
-    
 
-
-print(getBloombergData("Trend Global"))
+getAllValues()
